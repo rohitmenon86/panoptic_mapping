@@ -29,7 +29,7 @@ class FlatDataPlayer(object):
         self.use_detectron = rospy.get_param('~use_detectron', False)
         self.play_rate = rospy.get_param('~play_rate', 1.0)
         self.wait = rospy.get_param('~wait', False)
-        self.max_frames = rospy.get_param('~max_frames', 1e9)
+        self.max_frames = 1000*1000*1000 #rospy.get_param('~max_frames', 1e9)
         self.refresh_rate = 100  # Hz
 
         # ROS
@@ -176,7 +176,7 @@ class FlatDataPlayer(object):
         pose_msg.pose.orientation.y = rotation[1]
         pose_msg.pose.orientation.z = rotation[2]
         pose_msg.pose.orientation.w = rotation[3]
-        self.pose_pub.publish(pose_msg)
+        #self.pose_pub.publish(pose_msg)
 
         self.current_index += 1
         if self.current_index > self.max_frames:

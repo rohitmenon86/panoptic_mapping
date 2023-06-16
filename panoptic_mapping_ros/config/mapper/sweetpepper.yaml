@@ -13,7 +13,7 @@ check_input_interval: 0.1
 
 labels:
   type: csv
-  file_name: /home/rohit/workspace/data/flat_dataset/detectron_labels.csv
+  file_name: /home/rohit/workspace/data/flat_dataset/sweetpepper_labels.csv
 
 camera:
   verbosity: 1
