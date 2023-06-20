@@ -7,7 +7,7 @@ global_frame_name: world
 visualization_interval: 1.0
 data_logging_interval: 1.0
 print_timing_interval: 1.0
-max_input_queue_length: 1000
+max_input_queue_length: 10
 ros_spinning_threads: 12
 check_input_interval: 0.1
 
@@ -41,9 +41,9 @@ submap_allocator:
     type: moving_binary_count
   
   # Semantic
-  small_instance_voxel_size: 0.01
-  medium_instance_voxel_size: 0.03
-  large_instance_voxel_size: 0.04
+  small_instance_voxel_size: 0.004
+  medium_instance_voxel_size: 0.08
+  large_instance_voxel_size: 0.01
   background_voxel_size: 0.05
   unknown_voxel_size: 0.05
   
@@ -55,13 +55,13 @@ freespace_allocator:
   voxel_size: 0.3
 
 id_tracker:
-  type: detectron # ground_truth, projective, detectron, single_tsdf
+  type: projective # ground_truth, projective, detectron, single_tsdf
   verbosity: 1
   
   # Projective ID tracker
   depth_tolerance: -1  # m, negative = #vs
-  tracking_metric: IoU  # IoU, overlap
-  match_acceptance_threshold: 0.1  
+  tracking_metric: overlap  # IoU, overlap
+  match_acceptance_threshold: 0.3  
   min_allocation_size: 100 # px, for submap allocation.
   use_class_data_for_matching: true  
 
@@ -117,8 +117,8 @@ visualization:
   submaps:
     type: submaps  # submaps, single_tsdf
     verbosity: 1
-    color_mode: submaps # submaps, instances, color, normals, classes, change, classification
-    visualization_mode: active  # all, active, active_only, inactive, persistent
+    color_mode: instances # submaps, instances, color, normals, classes, change, classification
+    visualization_mode: all  # all, active, active_only, inactive, persistent
     submap_color_discretization: 20
     visualize_mesh: true
     visualize_tsdf_blocks: true

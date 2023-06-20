@@ -300,9 +300,9 @@ bool InputSynchronizer::lookupTransform(const ros::Time& timestamp,
   // Try to lookup the transform for the maximum wait time.
   tf::StampedTransform transform;
   try {
-    tf_listener_.waitForTransform(base_frame, child_frame, ros::Time(0),
+    tf_listener_.waitForTransform(base_frame, child_frame, timestamp,
                                   ros::Duration(config_.transform_lookup_time));
-    tf_listener_.lookupTransform(base_frame, child_frame, ros::Time(0), transform);
+    tf_listener_.lookupTransform(base_frame, child_frame, timestamp, transform);
   } catch (tf::TransformException& ex) {
     LOG_IF(WARNING, config_.verbosity >= 2)
         << "Unable to lookup transform between '" << base_frame << "' and '"
