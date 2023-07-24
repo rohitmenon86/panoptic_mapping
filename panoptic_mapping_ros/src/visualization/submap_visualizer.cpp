@@ -95,7 +95,7 @@ void SubmapVisualizer::clearMesh() {
   }
 }
 
-void SubmapVisualizer::visualizeAll(SubmapCollection* submaps) {
+void SubmapVisualizer::visualizeAll(ThreadSafeSubmapCollection* submaps) {
   publishTfTransforms(*submaps);
   updateVisInfos(*submaps);
   vis_infos_are_updated_ = true;  // Prevent repeated updates.
@@ -106,7 +106,7 @@ void SubmapVisualizer::visualizeAll(SubmapCollection* submaps) {
   vis_infos_are_updated_ = false;
 }
 
-void SubmapVisualizer::visualizeMeshes(SubmapCollection* submaps) {
+void SubmapVisualizer::visualizeMeshes(ThreadSafeSubmapCollection* submaps) {
   if (config_.visualize_mesh && mesh_pub_.getNumSubscribers() > 0) {
     std::vector<voxblox_msgs::MultiMesh> msgs = generateMeshMsgs(submaps);
     for (auto& msg : msgs) {
@@ -115,7 +115,7 @@ void SubmapVisualizer::visualizeMeshes(SubmapCollection* submaps) {
   }
 }
 
-void SubmapVisualizer::visualizeTsdfBlocks(const SubmapCollection& submaps) {
+void SubmapVisualizer::visualizeTsdfBlocks(const ThreadSafeSubmapCollection& submaps) {
   if (config_.visualize_tsdf_blocks &&
       tsdf_blocks_pub_.getNumSubscribers() > 0) {
     visualization_msgs::MarkerArray markers = generateBlockMsgs(submaps);
@@ -123,7 +123,7 @@ void SubmapVisualizer::visualizeTsdfBlocks(const SubmapCollection& submaps) {
   }
 }
 
-void SubmapVisualizer::visualizeFreeSpace(const SubmapCollection& submaps) {
+void SubmapVisualizer::visualizeFreeSpace(const ThreadSafeSubmapCollection& submaps) {
   if (config_.visualize_free_space && freespace_pub_.getNumSubscribers() > 0) {
     pcl::PointCloud<pcl::PointXYZI> msg = generateFreeSpaceMsg(submaps);
     msg.header.frame_id = global_frame_name_;
@@ -132,7 +132,7 @@ void SubmapVisualizer::visualizeFreeSpace(const SubmapCollection& submaps) {
 }
 
 void SubmapVisualizer::visualizeBoundingVolume(
-    const SubmapCollection& submaps) {
+    const ThreadSafeSubmapCollection& submaps) {
   if (config_.visualize_bounding_volumes &&
       bounding_volume_pub_.getNumSubscribers() > 0) {
     visualization_msgs::MarkerArray markers =
@@ -142,7 +142,7 @@ void SubmapVisualizer::visualizeBoundingVolume(
 }
 
 std::vector<voxblox_msgs::MultiMesh> SubmapVisualizer::generateMeshMsgs(
-    SubmapCollection* submaps) {
+    ThreadSafeSubmapCollection* submaps) {
   std::vector<voxblox_msgs::MultiMesh> result;
 
   // Update the visualization infos.
@@ -165,7 +165,7 @@ std::vector<voxblox_msgs::MultiMesh> SubmapVisualizer::generateMeshMsgs(
   }
 
   // Process all submaps based on their visualization info.
-  for (Submap& submap : *submaps) {
+  for (const Submap &submap : submaps->getSubmaps()) {
     if (submap.getLabel() == PanopticLabel::kFreeSpace) {
       continue;
     }
@@ -187,14 +187,14 @@ std::vector<voxblox_msgs::MultiMesh> SubmapVisualizer::generateMeshMsgs(
 
     // NOTE(schmluk): The mesh should already be updated. Since only changed
     // blocks will be re-meshed this double check should be cheap.
-    submap.updateMesh();
+    // submap.updateMesh(); // doesn't work for const
 
     // Mark the whole mesh for re-publishing if requested.
     if (info.republish_everything) {
       voxblox::BlockIndexList mesh_indices;
       submap.getMeshLayer().getAllAllocatedMeshes(&mesh_indices);
       for (const auto& block_index : mesh_indices) {
-        submap.getMeshLayerPtr()->getMeshPtrByIndex(block_index)->updated =
+        submap.getMeshLayer().getMeshByIndex(block_index).updated =
             true;
       }
       info.republish_everything = false;
@@ -214,7 +214,7 @@ std::vector<voxblox_msgs::MultiMesh> SubmapVisualizer::generateMeshMsgs(
     if (color_mode_ == ColorMode::kClassification) {
       generateClassificationMesh(&submap, &msg.mesh);
     } else {
-      voxblox::generateVoxbloxMeshMsg(submap.getMeshLayerPtr(),
+      voxblox::generateVoxbloxMeshMsg(&submap.getMeshLayer(),
                                       color_mode_voxblox, &msg.mesh);
     }
 
@@ -260,7 +260,7 @@ std::vector<voxblox_msgs::MultiMesh> SubmapVisualizer::generateMeshMsgs(
   return result;
 }
 
-void SubmapVisualizer::generateClassificationMesh(Submap* submap,
+void SubmapVisualizer::generateClassificationMesh(const Submap* submap,
                                                   voxblox_msgs::Mesh* mesh) {
   if (!submap->hasClassLayer()) {
     return;
@@ -277,7 +277,7 @@ void SubmapVisualizer::generateClassificationMesh(Submap* submap,
   voxblox::BlockIndexList updated_blocks;
   tsdf_layer.getAllAllocatedBlocks(&updated_blocks);
   for (const auto& index : updated_blocks) {
-    TsdfBlock& block = submap->getTsdfLayerPtr()->getBlockByIndex(index);
+    const TsdfBlock& block = submap->getTsdfLayer().getBlockByIndex(index);
     // NOTE(schmluk): we abuse the esdf flag here to mesh only updated blocks.
     // TODO(schmluk): clean this up (maybe custom bit or so).
     tsdf_layer.getBlockByIndex(index).setUpdated(
@@ -319,14 +319,14 @@ void SubmapVisualizer::generateClassificationMesh(Submap* submap,
 }
 
 visualization_msgs::MarkerArray SubmapVisualizer::generateBlockMsgs(
-    const SubmapCollection& submaps) {
+    const ThreadSafeSubmapCollection& submaps) {
   visualization_msgs::MarkerArray result;
   // Update the visualization infos.
   if (!vis_infos_are_updated_) {
     updateVisInfos(submaps);
   }
 
-  for (const auto& submap : submaps) {
+  for (const auto& submap : submaps.getSubmaps()) {
     if (submap.getLabel() == PanopticLabel::kFreeSpace &&
         !config_.include_free_space) {
       continue;
@@ -381,27 +381,27 @@ visualization_msgs::MarkerArray SubmapVisualizer::generateBlockMsgs(
 }
 
 pcl::PointCloud<pcl::PointXYZI> SubmapVisualizer::generateFreeSpaceMsg(
-    const SubmapCollection& submaps) {
+    const ThreadSafeSubmapCollection& submaps) {
   pcl::PointCloud<pcl::PointXYZI> result;
 
   // Create a pointcloud with distance = intensity. Taken from voxblox.
-  const int free_space_id = submaps.getActiveFreeSpaceSubmapID();
-  if (submaps.submapIdExists(free_space_id)) {
+  const int free_space_id = submaps.getSubmaps().getActiveFreeSpaceSubmapID();
+  if (submaps.getSubmaps().submapIdExists(free_space_id)) {
     createDistancePointcloudFromTsdfLayer(
-        submaps.getSubmap(free_space_id).getTsdfLayer(), &result);
+        submaps.getSubmaps().getSubmap(free_space_id).getTsdfLayer(), &result);
   }
   return result;
 }
 
 visualization_msgs::MarkerArray SubmapVisualizer::generateBoundingVolumeMsgs(
-    const SubmapCollection& submaps) {
+    const ThreadSafeSubmapCollection& submaps) {
   visualization_msgs::MarkerArray result;
   // Update the visualization infos.
   if (!vis_infos_are_updated_) {
     updateVisInfos(submaps);
   }
 
-  for (const Submap& submap : submaps) {
+  for (const Submap& submap : submaps.getSubmaps()) {
     if (submap.getLabel() == PanopticLabel::kFreeSpace &&
         !config_.include_free_space) {
       continue;
@@ -441,7 +441,7 @@ visualization_msgs::MarkerArray SubmapVisualizer::generateBoundingVolumeMsgs(
   return result;
 }
 
-void SubmapVisualizer::updateVisInfos(const SubmapCollection& submaps) {
+void SubmapVisualizer::updateVisInfos(const ThreadSafeSubmapCollection& submaps) {
   // Check whether the same submap collection is being visualized (cached data).
   if (previous_submaps_ != &submaps) {
     reset();
@@ -456,7 +456,7 @@ void SubmapVisualizer::updateVisInfos(const SubmapCollection& submaps) {
   for (const auto& id_info_pair : vis_infos_) {
     ids.emplace_back(id_info_pair.first);
   }
-  submaps.updateIDList(ids, &new_ids, &deleted_ids);
+  submaps.getSubmaps().updateIDList(ids, &new_ids, &deleted_ids);
 
   // New submaps.
   for (int id : new_ids) {
@@ -464,10 +464,10 @@ void SubmapVisualizer::updateVisInfos(const SubmapCollection& submaps) {
     SubmapVisInfo& info = it->second;
     info.id = id;
     info.republish_everything = true;
-    const Submap& submap = submaps.getSubmap(info.id);
+    const Submap& submap = submaps.getSubmaps().getSubmap(info.id);
     // Note: The frame and submap names don't get updated for the visualization.
     info.name_space = std::to_string(info.id) + "_" + submap.getName();
-    setSubmapVisColor(submaps.getSubmap(id), &info);
+    setSubmapVisColor(submaps.getSubmaps().getSubmap(id), &info);
   }
 
   // Deleted Submaps.
@@ -478,7 +478,7 @@ void SubmapVisualizer::updateVisInfos(const SubmapCollection& submaps) {
   // Update colors where necessary.
   for (int id : ids) {
     if (!vis_infos_[id].was_deleted) {
-      setSubmapVisColor(submaps.getSubmap(id), &vis_infos_[id]);
+      setSubmapVisColor(submaps.getSubmaps().getSubmap(id), &vis_infos_[id]);
     }
   }
 }
@@ -631,14 +631,14 @@ void SubmapVisualizer::setSubmapVisColor(const Submap& submap,
   info->change_color = false;
 }
 
-void SubmapVisualizer::publishTfTransforms(const SubmapCollection& submaps) {
+void SubmapVisualizer::publishTfTransforms(const ThreadSafeSubmapCollection& submaps) {
   // Setup common message.
   geometry_msgs::TransformStamped msg;
   msg.header.stamp = ros::Time::now();
   msg.header.frame_id = global_frame_name_;
 
   // Send transforms of submaps.
-  for (const Submap& submap : submaps) {
+  for (const Submap& submap : submaps.getSubmaps()) {
     msg.child_frame_id = submap.getFrameName();
     tf::transformKindrToMsg(submap.getT_S_M().cast<double>(), &msg.transform);
     tf_broadcaster_.sendTransform(msg);

@@ -8,7 +8,7 @@
 
 #include <panoptic_mapping/common/common.h>
 #include <panoptic_mapping/common/globals.h>
-#include <panoptic_mapping/map/submap_collection.h>
+#include <panoptic_mapping/tools/thread_safe_submap_collection.h>
 #include <ros/node_handle.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -80,21 +80,21 @@ class SubmapVisualizer {
 
   // Visualization message creation.
   virtual std::vector<voxblox_msgs::MultiMesh> generateMeshMsgs(
-      SubmapCollection* submaps);
+      ThreadSafeSubmapCollection* submaps);
   virtual visualization_msgs::MarkerArray generateBlockMsgs(
-      const SubmapCollection& submaps);
+      const ThreadSafeSubmapCollection& submaps);
   virtual pcl::PointCloud<pcl::PointXYZI> generateFreeSpaceMsg(
-      const SubmapCollection& submaps);
+      const ThreadSafeSubmapCollection& submaps);
   virtual visualization_msgs::MarkerArray generateBoundingVolumeMsgs(
-      const SubmapCollection& submaps);
+      const ThreadSafeSubmapCollection& submaps);
 
   // Publish visualization requests.
-  virtual void visualizeAll(SubmapCollection* submaps);
-  virtual void visualizeMeshes(SubmapCollection* submaps);
-  virtual void visualizeTsdfBlocks(const SubmapCollection& submaps);
-  virtual void visualizeFreeSpace(const SubmapCollection& submaps);
-  virtual void visualizeBoundingVolume(const SubmapCollection& submaps);
-  virtual void publishTfTransforms(const SubmapCollection& submaps);
+  virtual void visualizeAll(ThreadSafeSubmapCollection* submaps);
+  virtual void visualizeMeshes(ThreadSafeSubmapCollection* submaps);
+  virtual void visualizeTsdfBlocks(const ThreadSafeSubmapCollection& submaps);
+  virtual void visualizeFreeSpace(const ThreadSafeSubmapCollection& submaps);
+  virtual void visualizeBoundingVolume(const ThreadSafeSubmapCollection& submaps);
+  virtual void publishTfTransforms(const ThreadSafeSubmapCollection& submaps);
 
   // Interaction.
   virtual void reset();
@@ -126,9 +126,9 @@ class SubmapVisualizer {
     voxblox::BlockIndexList previous_blocks;  // Track deleted blocks.
   };
 
-  virtual void updateVisInfos(const SubmapCollection& submaps);
+  virtual void updateVisInfos(const ThreadSafeSubmapCollection& submaps);
   virtual void setSubmapVisColor(const Submap& submap, SubmapVisInfo* info);
-  virtual void generateClassificationMesh(Submap* submap,
+  virtual void generateClassificationMesh(const Submap* submap,
                                           voxblox_msgs::Mesh* mesh);
 
  protected:
@@ -145,7 +145,7 @@ class SubmapVisualizer {
   // Cached / tracked data.
   std::unordered_map<int, SubmapVisInfo> vis_infos_;
   bool vis_infos_are_updated_ = false;
-  const SubmapCollection* previous_submaps_ =
+  const ThreadSafeSubmapCollection* previous_submaps_ =
       nullptr;  // Only for tracking, not for use!
 
   // ROS.

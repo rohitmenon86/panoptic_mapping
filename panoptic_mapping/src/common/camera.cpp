@@ -57,7 +57,10 @@ Camera::Camera(const Config& config) : config_(config.checkValid()) {
 
 bool Camera::pointIsInViewFrustum(const Point& point_C,
                                   float inflation_distance) const {
-  if (point_C.z() < -inflation_distance) {
+  if (point_C.hasNaN() || point_C.isZero()) {
+    return false;
+  }
+  if (point_C.z() < 0/*-inflation_distance*/) {
     return false;
   }
   if (point_C.norm() > config_.max_range + inflation_distance) {

@@ -318,13 +318,13 @@ void PanopticMapper::processInput(InputData* input) {
 
 void PanopticMapper::finishMapping() {
   map_manager_->finishMapping(submaps_.get());
-  submap_visualizer_->visualizeAll(submaps_.get());
+  submap_visualizer_->visualizeAll(thread_safe_submaps_.get());
   LOG_IF(INFO, config_.verbosity >= 2) << "Finished mapping.";
 }
 
 void PanopticMapper::publishVisualization() {
   Timer timer("visualization");
-  submap_visualizer_->visualizeAll(submaps_.get());
+  submap_visualizer_->visualizeAll(thread_safe_submaps_.get());
   planning_visualizer_->visualizeAll();
 }
 
@@ -375,7 +375,7 @@ bool PanopticMapper::loadMap(const std::string& file_path) {
   // Reproduce the mesh and visualization.
   submap_visualizer_->clearMesh();
   submap_visualizer_->reset();
-  submap_visualizer_->visualizeAll(submaps_.get());
+  submap_visualizer_->visualizeAll(thread_safe_submaps_.get());
 
   LOG_IF(INFO, config_.verbosity >= 1)
       << "Successfully loaded " << submaps_->size() << " submaps.";
@@ -429,7 +429,7 @@ bool PanopticMapper::setVisualizationModeCallback(
   }
 
   // Republish the visualization.
-  submap_visualizer_->visualizeAll(submaps_.get());
+  submap_visualizer_->visualizeAll(thread_safe_submaps_.get());
   return success;
 }
 

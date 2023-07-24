@@ -34,13 +34,14 @@
 
   <node name="panoptic_mapper" pkg="panoptic_mapping_ros" type="panoptic_mapper_node" output="screen" launch-prefix="gdb -ex run --args" required="$(arg shutdown_when_finished)">
     <!-- Config -->
-    <rosparam file="$(find panoptic_mapping_ros)/config/mapper/$(arg config).yaml"/>
+    <rosparam file="$(find panoptic_mapping_ros)/config/mapper/sweetpepper.yaml"/>
+    <param name="labels/file_name" value="$(find panoptic_mapping_ros)/config/mapper/sweetpepper_labels.csv"/>
      
     <!-- Input -->
-    <remap from="color_image_in" to="$(arg namespace)/color/image_raw"/>
-    <remap from="depth_image_in" to="$(arg namespace)/aligned_depth_to_color/image_float"/>
-    <remap from="segmentation_image_in" to="$(arg namespace)/segmentation_image"/>
-    <remap from="labels_in" to="$(arg namespace)/segmentation_labels"/>
+    <remap from="color_image_in" to="/camera/color/image_raw"/>
+    <remap from="depth_image_in" to="/camera/depth/image_raw"/>
+    <remap from="segmentation_image_in" to="/camera/segmentation_image"/>
+    <remap from="labels_in" to="/camera/segmentation_labels"/>
   </node>  
   
   <!-- Map loader -->

@@ -48,7 +48,7 @@ class SingleTsdfVisualizer : public SubmapVisualizer {
 
   // Visualization message creation.
   std::vector<voxblox_msgs::MultiMesh> generateMeshMsgs(
-      SubmapCollection* submaps) override;
+      ThreadSafeSubmapCollection* submaps) override;
 
   // Interaction.
   void reset() override;
@@ -62,7 +62,7 @@ class SingleTsdfVisualizer : public SubmapVisualizer {
   void colorMeshBlockFromScore(const Submap& submap,
                                voxblox_msgs::MeshBlock* mesh_block);
   std::function<Color(const ClassVoxel&)> getColoring() const;
-  void updateVisInfos(const SubmapCollection& submaps) override;
+  void updateVisInfos(const ThreadSafeSubmapCollection& submaps) override;
 
  private:
   const Config config_;

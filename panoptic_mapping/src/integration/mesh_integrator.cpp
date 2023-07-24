@@ -151,9 +151,9 @@ bool MeshIntegrator::updateMeshForBlock(
   extractBlockMesh(tsdf_block, class_block, mesh.get());
 
   // Update colors if needed.
-  if (config_.use_color) {
+  /*if (config_.use_color) {
     updateMeshColor(tsdf_block, class_block, mesh.get());
-  }
+  }*/
 
   mesh->updated = true;
   return true;
@@ -392,8 +392,8 @@ void MeshIntegrator::updateMeshColor(const TsdfBlock& tsdf_block,
       if (!tsdf_layer_->hasBlock(index)) {
         // The vertices should never lie outside allocated blocks.
         LOG(WARNING)
-            << "Tried to color a mesh vertex outside allocated blocks.";
-        return;
+            << "Tried to color a mesh vertex outside allocated blocks: " << vertex.transpose();
+        continue;
       }
       const TsdfBlock& neighbor_block = tsdf_layer_->getBlockByIndex(index);
       const TsdfVoxel& voxel = neighbor_block.getVoxelByCoordinates(vertex);

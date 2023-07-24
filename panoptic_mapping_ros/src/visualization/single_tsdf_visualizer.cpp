@@ -60,21 +60,20 @@ void SingleTsdfVisualizer::clearMesh() {
 }
 
 std::vector<voxblox_msgs::MultiMesh> SingleTsdfVisualizer::generateMeshMsgs(
-    SubmapCollection* submaps) {
+    ThreadSafeSubmapCollection* submaps) {
   std::vector<voxblox_msgs::MultiMesh> result;
-  if (submaps->size() == 0) {
+  if (submaps->getSubmaps().size() == 0) {
     LOG(WARNING) << "No Map to visualize.";
     return result;
   }
   // If the freespace map ID is not yet setup (loaded map) assume it's the first
   // submap in the collection.
-  if (submaps->getActiveFreeSpaceSubmapID() < 0) {
-    submaps->setActiveFreeSpaceSubmapID(submaps->begin()->getID());
-  }
+  /*if (submaps->getSubmaps().getActiveFreeSpaceSubmapID() < 0) {
+    submaps->getSubmaps().setActiveFreeSpaceSubmapID(submaps->getSubmaps().begin()->getID());
+  }*/
 
   // Get the single map.
-  Submap& submap =
-      *submaps->getSubmapPtr(submaps->getActiveFreeSpaceSubmapID());
+  const Submap& submap = submaps->getSubmaps().getSubmap(submaps->getSubmaps().getActiveFreeSpaceSubmapID());
 
   // Setup message.
   voxblox_msgs::MultiMesh msg;
@@ -83,14 +82,14 @@ std::vector<voxblox_msgs::MultiMesh> SingleTsdfVisualizer::generateMeshMsgs(
   msg.name_space = map_name_space_;
 
   // Update the mesh.
-  submap.updateMesh(true, false);
+  //submap->getSubmaps().updateMesh(true, false);
 
   // Mark the whole mesh for re-publishing if requested.
   if (info_.republish_everything) {
     voxblox::BlockIndexList mesh_indices;
     submap.getMeshLayer().getAllAllocatedMeshes(&mesh_indices);
     for (const auto& block_index : mesh_indices) {
-      submap.getMeshLayerPtr()->getMeshPtrByIndex(block_index)->updated = true;
+      submap.getMeshLayer().getMeshByIndex(block_index).updated = true;
     }
     info_.republish_everything = false;
   }
@@ -103,7 +102,7 @@ std::vector<voxblox_msgs::MultiMesh> SingleTsdfVisualizer::generateMeshMsgs(
     color_mode_voxblox = voxblox::ColorMode::kNormals;
   }
 
-  voxblox::generateVoxbloxMeshMsg(submap.getMeshLayerPtr(), color_mode_voxblox,
+  voxblox::generateVoxbloxMeshMsg(&submap.getMeshLayer(), color_mode_voxblox,
                                   &msg.mesh);
 
   // Add removed blocks so they are cleared from the visualization as well.
@@ -322,7 +321,7 @@ void SingleTsdfVisualizer::colorMeshBlockFromScore(
   }
 }
 
-void SingleTsdfVisualizer::updateVisInfos(const SubmapCollection& submaps) {
+void SingleTsdfVisualizer::updateVisInfos(const ThreadSafeSubmapCollection& submaps) {
   // Check whether the same submap collection is being visualized (cached
   // data).
   if (previous_submaps_ != &submaps) {
