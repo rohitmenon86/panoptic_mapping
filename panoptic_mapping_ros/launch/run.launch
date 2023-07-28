@@ -7,7 +7,7 @@
   <arg name="visualize" default="true"/> 
   
   <!-- Flat Dataset args -->
-  <arg name="base_path" default="/home/rohit/workspace/data/flat_dataset/run1/"/> 
+  <arg name="base_path" default="/home/user/tzaenker/ros_external/data/flat_dataset/run1/"/> 
   <arg name="play_rate" default="5"/>  <!-- Realtime factor -->
   <arg name="wait_time" default="0"/>  <!-- s -->
   <arg name="max_frames" default="1000"/> <!-- 90 -->

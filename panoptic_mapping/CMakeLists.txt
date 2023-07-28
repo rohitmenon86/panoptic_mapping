@@ -7,6 +7,9 @@ find_package(catkin_simple REQUIRED)
 catkin_simple(ALL_DEPS_REQUIRED)
 catkin_package()
 
+find_package(OpenCV)
+include_directories(${OpenCV_INCLUDE_DIRS})
+
 ############
 # PROTOBUF #
 ############
@@ -68,7 +71,7 @@ cs_add_library(${PROJECT_NAME}
         src/tools/evaluation_data_writer.cpp
         src/tools/serialization.cpp
         )
-target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_proto stdc++fs)
+target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_proto stdc++fs ${OpenCV_LIBRARIES})
 
 ##########
 # Tests #
