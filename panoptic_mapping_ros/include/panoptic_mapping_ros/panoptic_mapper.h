@@ -140,6 +140,8 @@ class PanopticMapper {
   }
   MapManagerBase* getMapManagerPtr() { return map_manager_.get(); }
   const Config& getConfig() const { return config_; }
+  const LabelHandlerBase& getLabelHandler() const { return *globals_->labelHandler(); }
+  const Camera& getCamera() const { return *globals_->camera(); }
 
  private:
   // Setup.

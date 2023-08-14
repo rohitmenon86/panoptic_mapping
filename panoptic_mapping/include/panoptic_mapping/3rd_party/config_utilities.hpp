@@ -639,6 +639,8 @@ struct ConfigInternal : public ConfigInternalVerificator {
   ConfigInternal(const ConfigInternal& other)
       : name_(other.name_), meta_data_(new MetaData(*(other.meta_data_))) {}
 
+  virtual ~ConfigInternal() = default;
+
   ConfigInternal& operator=(const ConfigInternal& other) {
     name_ = other.name_;
     meta_data_.reset(new MetaData(*(other.meta_data_)));

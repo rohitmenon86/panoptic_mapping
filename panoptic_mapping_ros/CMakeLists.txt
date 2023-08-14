@@ -10,6 +10,9 @@ catkin_package()
 # Libraries #
 #############
 
+#add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+#add_link_options(-fsanitize=address -fno-omit-frame-pointer)
+
 cs_add_library(${PROJECT_NAME}
         src/panoptic_mapper.cpp
         src/input/input_synchronizer.cpp

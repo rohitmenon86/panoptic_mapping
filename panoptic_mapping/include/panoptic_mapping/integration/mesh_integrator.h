@@ -51,7 +51,7 @@ namespace panoptic_mapping {
  */
 class MeshIntegrator {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  //EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   struct Config : public config_utilities::Config<Config> {
     // Whether to use color information from the TSDF.
     bool use_color = true;
@@ -132,7 +132,7 @@ class MeshIntegrator {
   // layer is used, specifies distance assumed for foreign voxels.
 
   // Cached index map.
-  Eigen::Matrix<int, 3, 8> cube_index_offsets_;
+  Eigen::Matrix<int, 3, 8, Eigen::DontAlign> cube_index_offsets_;
 };
 
 }  // namespace panoptic_mapping
